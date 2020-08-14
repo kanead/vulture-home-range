@@ -156,13 +156,14 @@ dbbmm <-
     location.error = 20,
     window.size = 31,
     margin = 11,
-    dimSize = 100,
-    ext = 0.8
-  )
+    raster = 1000
+   # dimSize = 100,
+   # ext = 0.8
+  ) 
 
 #' export the brownian bridge
-writeRaster(dbbmm, filename='brownian_bridges/andre_dbbm.tif', overwrite=TRUE)
-writeRaster(dbbmm, filename='brownian_bridges/andre_dbbm', overwrite=TRUE)
+writeRaster(dbbmm, filename='brownian_bridges/andre_dbbm_raster.tif', overwrite=TRUE)
+writeRaster(dbbmm, filename='brownian_bridges/andre_dbbm_raster', overwrite=TRUE)
 
 #' try a function
 #' this one works but doesn't give the names
@@ -227,5 +228,5 @@ levels(as.factor(trk1$id))
 export_data$ID <- gsub(pattern = "X", replacement = "", x = export_data$ID)
 export_data
 
-write.csv(export_data, file = "summary/brownian/andre_bb.csv")
+write.csv(export_data, file = "summary/brownian/andre_bb_raster.csv")
 

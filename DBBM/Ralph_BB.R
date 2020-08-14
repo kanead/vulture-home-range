@@ -23,6 +23,8 @@ library(sf)
 library(raster)
 library(adehabitatHR)
 library(adehabitatLT)
+library(move)
+
 
 ####' load the data ----
 data_path <- "data_ralph"   # path to the data
@@ -45,10 +47,16 @@ levels(as.factor(mydata$species))
 #' Tracks are assumed to be in UTC
 head(mydata)
 mydata$time <-
-  as.POSIXct(mydata$time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  as.POSIXct(mydata$time, format = "%Y-%m-%d %H:%M", tz = "UTC")
 head(mydata)
 
 attr(mydata$time, "tz")
+
+#' remove the seconds from the time stamp
+mydata$time <- round(mydata$time, units = "mins")
+
+attr(mydata$time, "tz")
+mydata
 
 ####' clean the data ----
 #' Check for duplicated observations (ones with same lat, long, timestamp,
@@ -60,6 +68,26 @@ sum(ind2)
 mydata$dups <- ind2
 mydata <- filter(mydata, dups == "FALSE")
 mydata
+
+#' remove the duplicate time stamps
+ind2 <- mydata %>% dplyr::select(time, id) %>%
+  duplicated
+sum(ind2)
+#' remove them
+mydata <- mydata %>% dplyr::select(time, long, lat, id, species)
+mydata$dups <- ind2
+mydata$time <- as.character(mydata$time)
+mydata
+mydata <- dplyr::filter(mydata, dups == "FALSE")
+mydata
+
+#' turn time column back into time object
+mydata$time <-
+  as.POSIXct(mydata$time, format = "%Y-%m-%d %H:%M", tz = "UTC")
+head(mydata)
+
+attr(mydata$time, "tz")
+
 
 #' filter extreme data based on a speed threshold
 #' based on vmax which is km/hr
@@ -159,8 +187,8 @@ dbbmm <-
   brownian.bridge.dyn(
     object = loc,
     location.error = 20,
-    window.size = 311,
-    margin = 111,
+    window.size = 31,
+    margin = 11,
     dimSize = 100,
     ext = 0.8
   )
@@ -187,8 +215,8 @@ bb_areas <- data.frame(unlist(areas))
 length(bb_areas$unlist.areas.)
 
 #' try one
-st_area(hr_isopleths(dbbmm$X.399745060, level = 0.95)) / 1e6 #' 1375.683  
-st_area(hr_isopleths(dbbmm$X.399749318, level = 0.95)) / 1e6 #' 77840.68
+st_area(hr_isopleths(dbbmm$X.399745060, level = 0.95)) / 1e6 #' 9600.509  
+st_area(hr_isopleths(dbbmm$X.399749318, level = 0.95)) / 1e6 #' 135931.7
 
 #' load in the cleaned version which is in Albers Equal Area
 merged_Africa_tranform <- read_sf("shapefile//merged_Africa_protected_clean.shp")
@@ -201,7 +229,7 @@ st_crs(merged_Africa_tranform)
 intersection_1_95 <-
   st_intersection(hr_isopleths(dbbmm$X.399745060, level = 0.95),
                   merged_Africa_tranform$geometry)
-sum(st_area(intersection_1_95)) / 1e6 #' 170.6318 
+sum(st_area(intersection_1_95)) / 1e6 #' 2709.998 
 
 #' function to calculate for overlap between BB and protected areas
 dbbmm_overlap_size <- function (x) {

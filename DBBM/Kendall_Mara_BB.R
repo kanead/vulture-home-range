@@ -207,11 +207,22 @@ trk1
 #' rare factor levels are causing issues
 #' drop them here
 levels(as.factor(trk1$id))
-trk1 <- trk1 %>% group_by(id) %>% dplyr::filter(n() >= 100)
+trk1 <- trk1 %>% group_by(id) %>% dplyr::filter(n() >= 100) %>% droplevels()
 levels(as.factor(trk1$id))
 
 #' drop IDs that are causing grid issues
-trk1 <- trk1 %>% filter_all(any_vars(str_detect(., c("AG")))) %>% droplevels()
+
+include <-
+  c("st20101055",
+    "st20101056")
+    
+trk1 <- trk1 %>% dplyr::filter(id %in% include)
+
+# # levels(as.factor(trk1$id))
+# # trk1 <- trk1 %>% 
+# filter_all(any_vars(str_detect(., c("st")))) 
+# %>% droplevels() #' st or AG
+
 levels(as.factor(trk1$id))
 
 track <- data.frame(trk1)
@@ -237,7 +248,8 @@ dbbmm <-
     margin = 11,
     dimSize = 100,
     ext = 0.8
-  )
+    # raster = 1000
+   )
 
 #' export the brownian bridge
 writeRaster(dbbmm, filename='brownian_bridges/kendall_mara_dbbm.tif', overwrite=TRUE)
@@ -261,8 +273,8 @@ bb_areas <- data.frame(unlist(areas))
 length(bb_areas$unlist.areas.)
 
 #' try one
-st_area(hr_isopleths(dbbmm$AG082, level = 0.95)) / 1e6 #' 129730.5  
-st_area(hr_isopleths(dbbmm$AG083, level = 0.95)) / 1e6 #' 64269.39
+st_area(hr_isopleths(dbbmm$st20101043, level = 0.95)) / 1e6 #' 129730.5  
+st_area(hr_isopleths(dbbmm$st20101044, level = 0.95)) / 1e6 #' 64269.39
 
 #' load in the cleaned version which is in Albers Equal Area
 merged_Africa_tranform <- read_sf("shapefile//merged_Africa_protected_clean.shp")
@@ -273,7 +285,7 @@ st_crs(merged_Africa_tranform)
 #' should be 69037.04 for AG082
 #' test it here
 intersection_1_95 <-
-  st_intersection(hr_isopleths(dbbmm$AG082, level = 0.95),
+  st_intersection(hr_isopleths(dbbmm$st20101043, level = 0.95),
                   merged_Africa_tranform$geometry)
 sum(st_area(intersection_1_95)) / 1e6 #' 69037.04 
 
@@ -303,4 +315,4 @@ export_data <- cbind(ID = rownames(export_data), export_data)
 rownames(export_data) <- NULL
 export_data
 
-write.csv(export_data, file = "summary/brownian/kendall_mara_bb.csv")
+write.csv(export_data, file = "summary/brownian/kendall_mara_bb_raster.csv", row.names = F)

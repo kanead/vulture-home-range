@@ -124,8 +124,9 @@ dbbmm <-
     location.error = 20,
     window.size = 31,
     margin = 11,
-    dimSize = 100,
-    ext = 0.8
+    raster = 1000
+  #  dimSize = 100,
+  #  ext = 0.8
   )
 
 #' export the brownian bridge
@@ -195,7 +196,7 @@ export_data <- cbind(ID = rownames(export_data), export_data)
 rownames(export_data) <- NULL
 export_data
 
-write.csv(export_data, file = "summary/brownian/eswatini_bb.csv")
+write.csv(export_data, file = "summary/brownian/eswatini_bb_raster.csv")
 
 ####' Manual way ----
 

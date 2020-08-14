@@ -13,7 +13,7 @@ data_path <- "C:\\Users\\Adam\\Documents\\Science\\Manuscripts\\Vulture protecte
 #' data_path <- "summary"   # path to the data
 
 files <- dir(data_path, pattern = "*recursion") # get file names
-length(files)
+length(files) #' 21 files because I split Darcy's 
 
 mydata <- files %>%
   # read in all the files, appending the path before the filename
@@ -96,6 +96,7 @@ ggplot(adults, aes(x = as.numeric(month), y = time)) + geom_point(fill = "steelb
   scale_x_continuous(breaks=c(1:12)) + facet_wrap(~region) + xlab("month")
 
 #' same as above but with a boxplot
+#' options are wb, rv & cv
 adults %>% filter(species == "rv") %>% 
 ggplot(., aes(x = month, y = time)) + geom_boxplot(fill = "steelblue", colour = "navy", alpha = 0.9) + theme_minimal() + theme(legend.position = "none") + facet_wrap(~region) + xlab("month") + ggtitle("ruppells vultures")
 

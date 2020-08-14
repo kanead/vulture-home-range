@@ -30,6 +30,11 @@ mydata <- files %>%
   map(~ read_csv(file.path(data_path, .))) %>%
   reduce(rbind)
 
+#' remove undeployed birds
+levels(as.factor(mydata$id))
+mydata <- mydata %>% dplyr::filter(!id == "#834450834" & !id == "#834451702") %>% droplevels()
+levels(as.factor(mydata$id))
+
 mydata$long <- as.numeric(mydata$long)
 mydata$lat <- as.numeric(mydata$lat)
 
@@ -290,6 +295,9 @@ trk_albers <-
 
 #' first get the areas using amt
 trk_albers <- arrange(trk_albers, id, t_)
+
+#' export the regularised track 
+# write.csv(x = trk_albers, file = "regularised/kendall_tanz_albers_reg_month.csv", row.names = FALSE)
 
 #' KDE
 kde <- trk_albers %>% nest(-id) %>%

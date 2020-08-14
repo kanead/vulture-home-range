@@ -274,6 +274,9 @@ trk_albers <-
 #' first get the areas using amt
 trk_albers <- arrange(trk_albers, id, t_)
 
+#' export the regularised track 
+write.csv(x = trk_albers, file = "regularised/eswatini_albers_reg_month.csv", row.names = FALSE)
+
 #' KDE 
 kde <- trk_albers %>% nest(-id) %>%
   mutate(kdearea = map(data, ~ hr_kde(., levels = c(0.5, 0.95)) %>% hr_area)) %>%

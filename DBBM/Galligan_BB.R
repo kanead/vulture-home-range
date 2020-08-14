@@ -105,6 +105,9 @@ trk1 <- day_trk %>%
 trk1
 
 #' temporal resolution is ~ 2 hours
+#' filter one track at a time to see which one is causing an issue
+trk1 <- trk1 %>% dplyr::filter(id == "lf143660") %>% droplevels()
+levels(as.factor(trk1$id))
 
 track <- data.frame(trk1)
 track <- arrange(track, id)
@@ -127,8 +130,9 @@ dbbmm <-
     location.error = 20,
     window.size = 31,
     margin = 11,
-    dimSize = 100,
-    ext = 0.8
+    raster = 1000
+   # dimSize = 100,
+   # ext = 0.8
   )
 
 #' Got an error - Higher y grid not large enough, consider extending 
@@ -205,7 +209,7 @@ levels(as.factor(trk1$id))
 export_data$ID <- gsub(pattern = "X", replacement = "", x = export_data$ID)
 export_data
 
-write.csv(export_data, file = "summary/brownian/galligan_bb.csv")
+write.csv(export_data, file = "summary/brownian/galligan_bb_raster.csv")
 
 ####' MANUAL WAY ----
 

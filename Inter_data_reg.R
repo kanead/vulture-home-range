@@ -5,6 +5,7 @@
 
 #' remove all
 rm(list = ls())
+graphics.off()
 
 #' Load the required packages
 library(readr)
@@ -254,6 +255,9 @@ trk_albers <-
 
 #' first get the areas using amt
 trk_albers <- arrange(trk_albers, id, t_)
+
+#' export the regularised track 
+# write.csv(x = trk_albers, file = "regularised/inter_albers_reg.csv", row.names = FALSE)
 
 #' KDE
 kde <- trk_albers %>% nest(-id) %>%

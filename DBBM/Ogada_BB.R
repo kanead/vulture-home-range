@@ -39,6 +39,12 @@ mydata$time <-
 mydata
 attr(mydata$time, "tzone")
 
+#' remove the seconds from the time stamp
+mydata$time <- round(mydata$time, units = "mins")
+
+attr(mydata$time, "tz")
+mydata
+
 ####' clean the data ----
 #' Check for duplicated observations (ones with same lat, long, timestamp,
 #'  and individual identifier).
@@ -54,6 +60,26 @@ mydata
 summary(mydata)
 mydata <- mydata %>% na.omit()
 summary(mydata)
+
+#' remove the duplicate time stamps
+ind2 <- mydata %>% dplyr::select(time, id) %>%
+  duplicated
+sum(ind2)
+#' remove them
+mydata <- mydata %>% dplyr::select(time, long, lat, id, species)
+mydata$dups <- ind2
+mydata$time <- as.character(mydata$time)
+mydata
+mydata <- dplyr::filter(mydata, dups == "FALSE")
+mydata
+
+#' turn time column back into time object
+mydata$time <-
+  as.POSIXct(mydata$time, format = "%Y-%m-%d %H:%M", tz = "UTC")
+head(mydata)
+
+attr(mydata$time, "tz")
+
 
 #' filter extreme data based on a speed threshold
 #' based on vmax which is km/hr
@@ -108,6 +134,12 @@ trk1 <- day_trk %>%
   ) 
 trk1
 
+
+levels(as.factor(trk1$id))
+trk1 <- trk1 %>% dplyr::filter(id == "Two") %>% droplevels()
+levels(as.factor(trk1$id))
+trk1
+
 track <- data.frame(trk1)
 track <- arrange(track, id)
 head(track)
@@ -122,13 +154,14 @@ loc <-
     animal = track$id
   )
 
+
 #' Now create a dBBMM object
 dbbmm <-
   brownian.bridge.dyn(
     object = loc,
     location.error = 20,
-    window.size = 311,
-    margin = 111,
+    window.size = 31,
+    margin = 11,
     dimSize = 100,
     ext = 0.8
   )
@@ -138,6 +171,75 @@ writeRaster(dbbmm, filename='brownian_bridges/ogada_dbbm.tif', overwrite=TRUE)
 writeRaster(dbbmm, filename='brownian_bridges/ogada_dbbm', overwrite=TRUE)
 
 plot(dbbmm)
+
+#' try a function
+#' this one works but doesn't give the names
+dbbmm_size <- function (x) {
+  return(tryCatch(
+    st_area(hr_isopleths(dbbmm[[x]], level = 0.95)) / 1e6,
+    error = function(e)
+      NULL
+  ))
+}
+y <- c(1:length(dbbmm[1]))
+areas <- lapply((y), dbbmm_size); areas
+#' add names by taking them from dbbmm object
+names(dbbmm)
+names(areas) <- names(dbbmm)
+bb_areas <- data.frame(unlist(areas))
+length(bb_areas$unlist.areas.)
+
+#' try one
+st_area(hr_isopleths(dbbmm$layer, level = 0.95)) / 1e6 #'  
+
+#' load in the cleaned version which is in Albers Equal Area
+merged_Africa_tranform <- read_sf("shapefile//merged_Africa_protected_clean.shp")
+st_crs(merged_Africa_tranform)
+
+#' what's the area of overlap with the protected areas?
+#' this is at 95%
+#' test it here
+intersection_1_95 <-
+  st_intersection(hr_isopleths(dbbmm$layer, level = 0.95),
+                  merged_Africa_tranform$geometry)
+sum(st_area(intersection_1_95)) / 1e6  
+
+#' function to calculate for overlap between BB and protected areas
+dbbmm_overlap_size <- function (x) {
+  return(tryCatch(
+    sum(st_area(st_intersection(hr_isopleths(dbbmm[[x]], level = 0.95),
+                                merged_Africa_tranform$geometry))) / 1e6 , 
+    error = function(e)
+      NULL
+  ))
+}
+
+y <- c(1:length(dbbmm[1]))
+#' run it over all of the IDs
+pa_overlap <- lapply(y, dbbmm_overlap_size);pa_overlap 
+names(pa_overlap) <- names(dbbmm)
+pabb_areas <- data.frame(unlist(pa_overlap))
+length(pabb_areas$unlist.pa_overlap.)
+
+export_data <- data.frame(cbind(bb_areas, pabb_areas))
+#' rename columns
+export_data <- export_data %>% rename(bb_area_95 = unlist.areas.)
+export_data <- export_data %>% rename(bb_area_95_overlap = unlist.pa_overlap.)
+export_data
+export_data <- cbind(ID = rownames(export_data), export_data)
+rownames(export_data) <- NULL
+#' remove the X that gets added to the IDs
+levels(as.factor(trk1$id))
+export_data$ID <- gsub(pattern = "X", replacement = "#", x = export_data$ID)
+export_data$ID <- gsub(pattern = "\\.", replacement = "", x = export_data$ID)
+export_data
+
+
+write.csv(export_data, file = "summary/brownian/ogada_bb_raster.csv")
+
+
+
+####' manual way ----
 
 #' convert the brownian bridge raster to vector and calculate its size
 #' need to specify the level
